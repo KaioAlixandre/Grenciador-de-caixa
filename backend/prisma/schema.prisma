@@ -1,0 +1,283 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        String   @id @default(cuid())
+  nome      String
+  email     String   @unique
+  senha     String
+  papel     String   @default("USUARIO") // USUARIO, ADMIN, VENDEDOR
+  avatar    String?
+  ativo     Boolean  @default(true)
+  ultimo_login DateTime?
+  criado_em DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  // Relacionamentos
+  categorias  Categoria[]
+  transacoes  Transacao[]
+  vendas      Venda[]
+  compras     Compra[]
+  saldos      Saldo[]
+
+  @@map("usuarios")
+}
+
+model Categoria {
+  id          String      @id @default(cuid())
+  nome        String
+  descricao   String?
+  tipo        String      // RECEITA, DESPESA, PRODUTO
+  cor         String      @default("#007bff")
+  icone       String      @default("fas fa-tag")
+  ativa       Boolean     @default(true)
+  usuario_id  String
+  criado_em   DateTime    @default(now())
+  atualizado_em DateTime  @updatedAt
+
+  // Relacionamentos
+  usuario     Usuario     @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  transacoes  Transacao[]
+  produtos    Produto[]
+
+  // Índice composto para evitar categorias duplicadas por usuário
+  @@unique([nome, usuario_id])
+  @@map("categorias")
+}
+
+model Fornecedor {
+  id          String   @id @default(cuid())
+  nome        String
+  cnpj        String?
+  telefone    String?
+  email       String?
+  endereco    String?
+  ativo       Boolean  @default(true)
+  observacoes String?
+  criado_em   DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  // Relacionamentos
+  produtos    Produto[]
+  compras     Compra[]
+
+  @@map("fornecedores")
+}
+
+model Produto {
+  id             String   @id @default(cuid())
+  nome           String
+  descricao      String?
+  codigo_barras  String?  @unique
+  categoria_id   String
+  fornecedor_id  String?
+  unidade_medida String   // UNIDADE, QUILOGRAMA, GRAMA, LITRO
+  preco_compra   Float    @default(0)
+  preco_venda    Float
+  margem_lucro   Float?   // Calculado automaticamente
+  estoque_minimo Float    @default(0)
+  estoque_atual  Float    @default(0)
+  ativo          Boolean  @default(true)
+  tem_peso       Boolean  @default(false) // Para produtos vendidos por peso
+  observacoes    String?
+  criado_em      DateTime @default(now())
+  atualizado_em  DateTime @updatedAt
+
+  // Relacionamentos
+  categoria       Categoria        @relation(fields: [categoria_id], references: [id], onDelete: Restrict)
+  fornecedor      Fornecedor?      @relation(fields: [fornecedor_id], references: [id], onDelete: SetNull)
+  itens_venda     ItemVenda[]
+  itens_compra    ItemCompra[]
+  movimentos_estoque MovimentoEstoque[]
+
+  @@index([categoria_id])
+  @@index([fornecedor_id])
+  @@map("produtos")
+}
+
+model Cliente {
+  id        String   @id @default(cuid())
+  nome      String
+  cpf       String?
+  telefone  String?
+  email     String?
+  endereco  String?
+  ativo     Boolean  @default(true)
+  limite_credito Float @default(0)
+  saldo_devedor  Float @default(0)
+  observacoes    String?
+  criado_em DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  // Relacionamentos
+  vendas    Venda[]
+
+  @@map("clientes")
+}
+
+model Venda {
+  id             String   @id @default(cuid())
+  numero_venda   String   @unique
+  cliente_id     String?
+  vendedor_id    String
+  data_venda     DateTime @default(now())
+  tipo_pagamento String   // DINHEIRO, CARTAO_CREDITO, CARTAO_DEBITO, PIX, PRAZO
+  valor_total    Float
+  valor_desconto Float    @default(0)
+  valor_final    Float
+  status         String   @default("CONCLUIDA") // CONCLUIDA, CANCELADA, PENDENTE
+  observacoes    String?
+  criado_em      DateTime @default(now())
+  atualizado_em  DateTime @updatedAt
+
+  // Relacionamentos
+  cliente        Cliente?      @relation(fields: [cliente_id], references: [id], onDelete: SetNull)
+  vendedor       Usuario       @relation(fields: [vendedor_id], references: [id], onDelete: Restrict)
+  itens          ItemVenda[]
+
+  @@index([data_venda])
+  @@index([vendedor_id])
+  @@index([cliente_id])
+  @@map("vendas")
+}
+
+model ItemVenda {
+  id         String  @id @default(cuid())
+  venda_id   String
+  produto_id String
+  quantidade Float
+  preco_unitario Float
+  preco_total    Float
+  peso_vendido   Float? // Para produtos vendidos por peso
+  criado_em  DateTime @default(now())
+
+  // Relacionamentos
+  venda      Venda    @relation(fields: [venda_id], references: [id], onDelete: Cascade)
+  produto    Produto  @relation(fields: [produto_id], references: [id], onDelete: Restrict)
+
+  @@index([venda_id])
+  @@index([produto_id])
+  @@map("itens_venda")
+}
+
+model Compra {
+  id              String   @id @default(cuid())
+  numero_compra   String   @unique
+  fornecedor_id   String
+  comprador_id    String
+  data_compra     DateTime @default(now())
+  valor_total     Float
+  valor_frete     Float    @default(0)
+  valor_final     Float
+  status          String   @default("CONCLUIDA") // CONCLUIDA, CANCELADA, PENDENTE
+  observacoes     String?
+  criado_em       DateTime @default(now())
+  atualizado_em   DateTime @updatedAt
+
+  // Relacionamentos
+  fornecedor      Fornecedor    @relation(fields: [fornecedor_id], references: [id], onDelete: Restrict)
+  comprador       Usuario       @relation(fields: [comprador_id], references: [id], onDelete: Restrict)
+  itens           ItemCompra[]
+
+  @@index([data_compra])
+  @@index([fornecedor_id])
+  @@map("compras")
+}
+
+model ItemCompra {
+  id         String  @id @default(cuid())
+  compra_id  String
+  produto_id String
+  quantidade Float
+  preco_unitario Float
+  preco_total    Float
+  criado_em  DateTime @default(now())
+
+  // Relacionamentos
+  compra     Compra   @relation(fields: [compra_id], references: [id], onDelete: Cascade)
+  produto    Produto  @relation(fields: [produto_id], references: [id], onDelete: Restrict)
+
+  @@index([compra_id])
+  @@index([produto_id])
+  @@map("itens_compra")
+}
+
+model MovimentoEstoque {
+  id         String   @id @default(cuid())
+  produto_id String
+  tipo       String   // ENTRADA, SAIDA, AJUSTE
+  quantidade Float
+  motivo     String   // VENDA, COMPRA, AJUSTE, PERDA, DEVOLUCAO
+  observacoes String?
+  data_movimento DateTime @default(now())
+  criado_em  DateTime @default(now())
+
+  // Relacionamentos
+  produto    Produto  @relation(fields: [produto_id], references: [id], onDelete: Restrict)
+
+  @@index([produto_id])
+  @@index([data_movimento])
+  @@map("movimentos_estoque")
+}
+
+model Transacao {
+  id              String     @id @default(cuid())
+  descricao       String
+  valor           Float
+  tipo            String     // RECEITA, DESPESA
+  categoria_id    String
+  data            DateTime   @default(now())
+  metodo_pagamento String    @default("DINHEIRO")
+  observacoes     String?
+  tags            String     @default("[]")
+  comprovante     String?
+  recorrente      Boolean    @default(false)
+  frequencia      String?
+  data_fim        DateTime?
+  proxima_data    DateTime?
+  usuario_id      String
+  venda_id        String?    // Vincular com venda se for receita de venda
+  compra_id       String?    // Vincular com compra se for despesa de compra
+  criado_em       DateTime   @default(now())
+  atualizado_em   DateTime   @updatedAt
+
+  // Relacionamentos
+  usuario         Usuario    @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  categoria       Categoria  @relation(fields: [categoria_id], references: [id], onDelete: Restrict)
+
+  @@index([usuario_id, data])
+  @@index([usuario_id, tipo])
+  @@index([usuario_id, categoria_id])
+  @@map("transacoes")
+}
+
+model Saldo {
+  id              String   @id @default(cuid())
+  usuario_id      String   @unique
+  saldo_atual     Float    @default(0)
+  receita_total   Float    @default(0)
+  despesa_total   Float    @default(0)
+  receita_mensal  Float    @default(0)
+  despesa_mensal  Float    @default(0)
+  vendas_total    Float    @default(0)
+  vendas_mensal   Float    @default(0)
+  compras_total   Float    @default(0)
+  compras_mensal  Float    @default(0)
+  ultima_atualizacao DateTime @default(now())
+  criado_em       DateTime @default(now())
+  atualizado_em   DateTime @updatedAt
+
+  // Relacionamentos
+  usuario         Usuario  @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@map("saldos")
+}

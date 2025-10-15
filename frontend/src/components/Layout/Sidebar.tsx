@@ -14,7 +14,7 @@ import {
 } from 'react-icons/fi';
 
 const SidebarContainer = styled.nav<{ isOpen: boolean }>`
-  background: white;
+  background: #111;
   width: 280px;
   height: calc(100vh - 64px);
   position: fixed;
@@ -39,7 +39,7 @@ const SidebarSection = styled.div`
 `;
 
 const SectionTitle = styled.h3`
-  color: #666;
+  color: #FF5C00;
   font-size: 0.875rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -53,21 +53,22 @@ const SidebarItem = styled(NavLink)`
   align-items: center;
   gap: 12px;
   padding: 12px 24px;
-  color: #666;
+  color: #FF5C00;
   text-decoration: none;
   transition: all 0.2s;
   border-right: 3px solid transparent;
 
   &:hover {
-    background: #f8f9fa;
-    color: #333;
+    background: #FF5C00;
+    color: #111;
+    font-weight: 500;
   }
 
   &.active {
-    background: #e3f2fd;
-    color: #007bff;
-    border-right-color: #007bff;
-    font-weight: 500;
+    background: #FF5C00;
+    color: #111;
+    border-right-color: #FF5C00;
+    font-weight: 700;
   }
 
   svg {
@@ -125,10 +126,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <SidebarItem to="/produtos" onClick={onClose}>
               <FiPackage size={20} />
               Produtos
-            </SidebarItem>
-            <SidebarItem to="/categorias" onClick={onClose}>
-              <FiTag size={20} />
-              Categorias
             </SidebarItem>
             <SidebarItem to="/estoque" onClick={onClose}>
               <FiBox size={20} />

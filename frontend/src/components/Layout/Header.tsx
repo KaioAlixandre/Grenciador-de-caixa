@@ -1,16 +1,17 @@
 import React from 'react';
+// ...existing code...
 import styled from 'styled-components';
 import { FiMenu, FiUser, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 
 const HeaderContainer = styled.header`
-  background: white;
-  height: 64px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #111;
+  height: 70px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 32px;
   position: fixed;
   top: 0;
   left: 0;
@@ -19,86 +20,108 @@ const HeaderContainer = styled.header`
 `;
 
 const Logo = styled.h1`
-  color: #007bff;
-  font-size: 1.5rem;
-  font-weight: 600;
+  color: #FF5C00;
+  font-size: 2rem;
+  font-weight: 700;
   margin: 0;
+  letter-spacing: 2px;
+  text-shadow: 1px 1px 0 #222, 2px 2px 0 #222;
 `;
 
 const UserMenu = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 24px;
 `;
 
 const UserInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #333;
+  gap: 10px;
+  color: #FF5C00;
+  font-weight: 500;
 `;
 
 const LogoutButton = styled.button`
-  background: none;
+  background: #FF5C00;
   border: none;
-  color: #666;
+  color: #111;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 4px;
+  padding: 8px 16px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
-  gap: 4px;
-  transition: background-color 0.2s;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: background 0.2s, color 0.2s;
 
   &:hover {
-    background: #f8f9fa;
-    color: #333;
+    background: #ff9800;
+    color: #fff;
   }
 `;
 
 const MenuButton = styled.button`
   background: none;
   border: none;
-  color: #333;
+  color: #FF5C00;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 4px;
+  padding: 10px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  transition: background-color 0.2s;
+  transition: background 0.2s;
 
   &:hover {
-    background: #f8f9fa;
+    background: #222;
   }
 
   @media (min-width: 769px) {
     display: none;
   }
 `;
+const Avatar = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #FF5C00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #111;
+  font-weight: bold;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+`;
 
 interface HeaderProps {
   onToggleSidebar: () => void;
 }
 
+// ...existing code...
+
 const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   const { user, logout } = useAuth();
+// ...existing code...
 
   return (
     <HeaderContainer>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
         <MenuButton onClick={onToggleSidebar}>
-          <FiMenu size={20} />
+          <FiMenu size={24} />
         </MenuButton>
         <Logo>Gestor de Caixa MK</Logo>
       </div>
-      
+
       <UserMenu>
         <UserInfo>
-          <FiUser size={16} />
+          <Avatar>{user?.nome ? user.nome[0].toUpperCase() : <FiUser size={18} />}</Avatar>
           <span>{user?.nome}</span>
         </UserInfo>
         <LogoutButton onClick={logout}>
-          <FiLogOut size={16} />
+          <FiLogOut size={18} />
           <span>Sair</span>
         </LogoutButton>
       </UserMenu>

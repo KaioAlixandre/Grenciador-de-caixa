@@ -12,6 +12,8 @@ import { POSPage } from './pages/Sales';
 import ClientsPage from './pages/Clients/ClientsPage';
 import ClientForm from './pages/Clients/ClientForm';
 import ClientAccount from './pages/Clients/ClientAccount';
+import { StockPage } from './pages/Stock';
+import { ReportsPage } from './pages/Reports';
 
 // Componente para proteger rotas que precisam de autenticação
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -58,6 +60,24 @@ const AppRoutes: React.FC = () => {
         } 
       />
       
+      {/* Relatórios */}
+      <Route 
+        path="/relatorios" 
+        element={
+          <ProtectedRoute>
+            <ReportsPage />
+          </ProtectedRoute>
+        } 
+      />
+      {/* Controle de Estoque */}
+      <Route 
+        path="/estoque" 
+        element={
+          <ProtectedRoute>
+            <StockPage />
+          </ProtectedRoute>
+        } 
+      />
       {/* Produtos */}
       <Route 
         path="/produtos" 

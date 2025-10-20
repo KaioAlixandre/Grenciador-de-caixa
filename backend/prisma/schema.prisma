@@ -134,6 +134,7 @@ model Venda {
   valor_total    Float
   valor_desconto Float    @default(0)
   valor_final    Float
+  valor_pago     Float    @default(0) // Valor já recebido (pagamentos parciais)
   status         String   @default("CONCLUIDA") // CONCLUIDA, CANCELADA, PENDENTE
   observacoes    String?
   criado_em      DateTime @default(now())

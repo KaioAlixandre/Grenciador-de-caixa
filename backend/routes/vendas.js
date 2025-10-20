@@ -5,7 +5,8 @@ const {
   createVenda,
   cancelarVenda,
   relatorioVendas,
-  getDashboardStats
+  getDashboardStats,
+  receberPagamento
 } = require('../controllers/vendaController');
 const { protect } = require('../middleware/auth');
 
@@ -27,7 +28,12 @@ router.route('/relatorio')
 router.route('/:id')
   .get(getVenda);
 
+
 router.route('/:id/cancelar')
   .post(cancelarVenda);
+
+// Rota para registrar pagamento de venda a prazo
+router.route('/:id/receber')
+  .post(receberPagamento);
 
 module.exports = router;

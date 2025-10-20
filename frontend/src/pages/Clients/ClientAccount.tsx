@@ -29,6 +29,8 @@ const ClientAccount: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [pagamentoVendaId, setPagamentoVendaId] = useState<string | null>(null);
   const [valorPagamento, setValorPagamento] = useState('');
+  const [pagando, setPagando] = useState(false);
+  const [erroPagamento, setErroPagamento] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -62,13 +64,16 @@ const ClientAccount: React.FC = () => {
 
   const registrarPagamento = async () => {
     if (!pagamentoVendaId || !valorPagamento) return;
+    setPagando(true);
+    setErroPagamento(null);
     try {
-      // Aqui deveria chamar a rota do backend para registrar o pagamento
       await api.post(`/vendas/${pagamentoVendaId}/receber`, { valor: parseFloat(valorPagamento) });
       fecharModalPagamento();
-      fetchComprasPrazo();
-    } catch (error) {
-      // Tratar erro
+      await fetchComprasPrazo();
+    } catch (error: any) {
+      setErroPagamento(error?.response?.data?.error || 'Erro ao registrar pagamento');
+    } finally {
+      setPagando(false);
     }
   };
 
@@ -131,8 +136,11 @@ const ClientAccount: React.FC = () => {
               min={0}
             />
             <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
-              <Button variant="primary" onClick={registrarPagamento}>Confirmar</Button>
-              <Button variant="secondary" onClick={fecharModalPagamento}>Cancelar</Button>
+              <Button variant="primary" onClick={registrarPagamento} disabled={pagando || !valorPagamento}>Confirmar</Button>
+              <Button variant="secondary" onClick={fecharModalPagamento} disabled={pagando}>Cancelar</Button>
+            {erroPagamento && (
+              <div style={{ color: 'red', marginTop: 8 }}>{erroPagamento}</div>
+            )}
             </div>
           </div>
         </div>

@@ -200,13 +200,13 @@ async function main() {
     // 6. Criar uma venda de exemplo
     const venda = await prisma.venda.create({
       data: {
-        numero_venda: 1,
+        numero_venda: "900001",
         cliente_id: clientes[0].id,
+        vendedor_id: usuario.id,
         data_venda: new Date(),
         valor_total: 53.00,
         valor_desconto: 0,
         valor_final: 53.00,
-        metodo_pagamento: 'DINHEIRO',
         tipo_pagamento: 'AVISTA',
         status: 'CONCLUIDA',
         observacoes: 'Primeira venda de exemplo'
@@ -221,7 +221,7 @@ async function main() {
           produto_id: produtos[1].id, // Ração Filhotes 3kg
           quantidade: 1,
           preco_unitario: 35.00,
-          subtotal: 35.00
+          preco_total: 35.00
         }
       }),
       prisma.itemVenda.create({
@@ -230,7 +230,7 @@ async function main() {
           produto_id: produtos[3].id, // Petisco 500g
           quantidade: 1,
           preco_unitario: 18.00,
-          subtotal: 18.00
+          preco_total: 18.00
         }
       })
     ]);

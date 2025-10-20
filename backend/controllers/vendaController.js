@@ -1,3 +1,70 @@
+// @desc    Registrar pagamento de venda a prazo
+// @route   POST /api/vendas/:id/receber
+// @access  Private
+const receberPagamento = async (req, res) => {
+  try {
+    const vendaId = req.params.id;
+    const { valor } = req.body;
+    console.log('[receberPagamento] vendaId:', vendaId, '| valor:', valor);
+    if (!valor || isNaN(valor) || valor <= 0) {
+      console.log('[receberPagamento] Valor do pagamento inválido:', valor);
+      return res.status(400).json({ success: false, error: 'Valor do pagamento inválido' });
+    }
+
+    // Buscar venda
+    const venda = await prisma.venda.findUnique({ where: { id: vendaId } });
+    if (!venda) {
+      console.log('[receberPagamento] Venda não encontrada:', vendaId);
+      return res.status(404).json({ success: false, error: 'Venda não encontrada' });
+    }
+    if (venda.status === 'CANCELADA') {
+      console.log('[receberPagamento] Venda cancelada:', vendaId);
+      return res.status(400).json({ success: false, error: 'Não é possível receber pagamento de venda cancelada' });
+    }
+    if (venda.tipo_pagamento !== 'PRAZO') {
+      console.log('[receberPagamento] Venda não é a prazo:', vendaId, '| tipo_pagamento:', venda.tipo_pagamento);
+      return res.status(400).json({ success: false, error: 'Pagamento só permitido para vendas a prazo' });
+    }
+
+    // Valor já pago (se existir)
+    let valorPagoAtual = venda.valor_pago || 0;
+    const valorFinal = venda.valor_final;
+    const novoValorPago = valorPagoAtual + parseFloat(valor);
+    if (novoValorPago > valorFinal) {
+      console.log('[receberPagamento] Valor pago excede o valor da venda:', novoValorPago, '>', valorFinal);
+      return res.status(400).json({ success: false, error: 'Valor pago excede o valor da venda' });
+    }
+
+    // Atualizar venda com novo valor_pago
+    const vendaAtualizada = await prisma.venda.update({
+      where: { id: vendaId },
+      data: {
+        valor_pago: novoValorPago,
+        status: novoValorPago >= valorFinal ? 'CONCLUIDA' : venda.status
+      }
+    });
+
+    // Registrar transação de recebimento (opcional, se desejar histórico)
+    await prisma.transacao.create({
+      data: {
+        descricao: `Recebimento de venda #${venda.numero_venda}`,
+        valor: parseFloat(valor),
+        tipo: 'RECEITA',
+        categoria_id: null,
+        data: new Date(),
+        metodo_pagamento: 'DINHEIRO',
+        usuario_id: req.user.id,
+        venda_id: vendaId
+      }
+    });
+
+    console.log('[receberPagamento] Pagamento registrado com sucesso para venda:', vendaId);
+    res.status(200).json({ success: true, data: vendaAtualizada });
+  } catch (error) {
+    logError('❌', 'Erro ao registrar pagamento de venda', error);
+    res.status(500).json({ success: false, error: 'Erro interno do servidor' });
+  }
+};
 const { prisma } = require('../config/database');
 const { logSale, logError } = require('../utils/logger');
 
@@ -535,5 +602,6 @@ module.exports = {
   createVenda,
   cancelarVenda,
   relatorioVendas,
-  getDashboardStats
+  getDashboardStats,
+  receberPagamento
 };
